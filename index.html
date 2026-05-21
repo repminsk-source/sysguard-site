@@ -12,6 +12,29 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <script>
+      // Restore path from 404.html redirect query param
+      (function() {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.href) {
+          history.replaceState(null, null, redirect);
+        }
+        // Handle ?p= param from 404.html
+        var search = location.search;
+        if (search) {
+          var params = search.slice(1).split('&');
+          var p = params.find(function(s) { return s.startsWith('p='); });
+          if (p) {
+            var path = p.slice(2).replace(/~and~/g, '&');
+            var q = params.find(function(s) { return s.startsWith('q='); });
+            var query = q ? '?' + q.slice(2).replace(/~and~/g, '&') : '';
+            var base = location.pathname.split('/').slice(0, 2).join('/');
+            history.replaceState(null, null, base + '/' + path + query + location.hash);
+          }
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
