@@ -37,6 +37,13 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      - name: Copy index.html for each SPA route (GitHub Pages fix)
+        run: |
+          mkdir -p dist/features dist/how-it-works dist/contact
+          cp dist/index.html dist/features/index.html
+          cp dist/index.html dist/how-it-works/index.html
+          cp dist/index.html dist/contact/index.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
