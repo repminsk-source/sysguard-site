@@ -4,14 +4,16 @@
     <meta charset="utf-8" />
     <title>sys.guard</title>
     <script>
-      // SPA redirect trick for GitHub Pages
-      // Encodes the path into a query param and redirects to index.html
+      // Single Page Apps for GitHub Pages — spa-github-pages trick
+      // https://github.com/rafgraph/spa-github-pages
+      // pathSegmentsToKeep = 1 because repo lives at /sysguard-site/
+      var pathSegmentsToKeep = 1;
       var l = window.location;
       l.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-        l.pathname.split('/').slice(0, 1 + 1).join('/') + '/?p=/' +
-        l.pathname.slice(1).split('/').slice(1).join('/').replace(/&/g, '~and~') +
-        (l.search ? '&q=' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
         l.hash
       );
     </script>
