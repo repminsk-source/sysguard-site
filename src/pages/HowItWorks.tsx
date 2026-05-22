@@ -18,10 +18,12 @@ function LiveLog() {
     const el = listRef.current;
     if (!el) return;
 
+    const COLORS = { block: "#f87171", info: "rgba(74,222,128,0.6)", warn: "#fbbf24" };
+
     const rows: HTMLDivElement[] = [];
     for (let i = 0; i < LOG_SIZE; i++) {
       const row = document.createElement("div");
-      row.className = "leading-5 text-transparent select-none";
+      row.style.cssText = "line-height:1.4;color:transparent;font-family:inherit;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
       row.textContent = "\u00A0";
       el.appendChild(row);
       rows.push(row);
@@ -40,19 +42,19 @@ function LiveLog() {
         const attack = ATTACK_TYPES[Math.floor(Math.random() * ATTACK_TYPES.length)];
         const cc = COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)];
         text = `[${ts}] BLOCK  ${randomIp()} [${cc}] → ${attack}`;
-        color = "text-red-400";
+        color = COLORS.block;
       } else if (rand < 0.8) {
         text = `[${ts}] INFO   Signature DB updated (+${Math.floor(Math.random()*12)+1} rules)`;
-        color = "text-green-400/60";
+        color = COLORS.info;
       } else {
         text = `[${ts}] WARN   Rate limit triggered: /api/login from ${randomIp()}`;
-        color = "text-yellow-400";
+        color = COLORS.warn;
       }
 
       const row = rows[head];
-      el.appendChild(row); // move to bottom — no shift for other rows
+      el.appendChild(row); // move to bottom — zero shift for all other rows
       row.textContent = text;
-      row.className = `leading-5 ${color}`;
+      row.style.color = color;
       row.style.opacity = "0";
       row.style.transition = "none";
       requestAnimationFrame(() => {
