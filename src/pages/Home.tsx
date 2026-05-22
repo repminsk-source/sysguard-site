@@ -41,22 +41,36 @@ function AttackFeed() {
     if (!el) return;
 
     // Pre-fill fixed rows — DOM never shifts, only textContent changes
+    const S = { ts: "rgba(255,255,255,0.25)", block: "#f87171", ip: "#4ade80cc", cc: "rgba(255,255,255,0.35)", type: "#fbbf24cc" };
+
+    const makeRow = () => {
+      const row = document.createElement("div");
+      row.style.cssText = "display:flex;align-items:center;gap:12px;padding:7px 16px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px;";
+      const mk = (w: string, color: string, text: string) => {
+        const s = document.createElement("span");
+        s.style.cssText = `width:${w};flex-shrink:0;color:${color};font-family:inherit;`;
+        s.textContent = text;
+        return s;
+      };
+      row.appendChild(mk("64px",  "rgba(255,255,255,0.15)", "—:—:—"));
+      row.appendChild(mk("56px",  "transparent",            "BLOCK"));
+      row.appendChild(mk("128px", "transparent",            "—"));
+      row.appendChild(mk("40px",  "transparent",            "—"));
+      const last = document.createElement("span");
+      last.style.color = "transparent";
+      last.textContent = "—";
+      row.appendChild(last);
+      return row;
+    };
+
     const rows: HTMLDivElement[] = [];
     for (let i = 0; i < FEED_SIZE; i++) {
-      const row = document.createElement("div");
-      row.className = "flex items-center gap-3 px-4 py-2 border-b border-white/5";
-      row.innerHTML = `
-        <span class="text-white/20 w-16 shrink-0 tabular-nums">—:—:—</span>
-        <span class="font-bold w-14 shrink-0 text-transparent">BLOCK</span>
-        <span class="w-32 shrink-0 text-transparent">0.0.0.0</span>
-        <span class="w-10 shrink-0 text-transparent">[--]</span>
-        <span class="text-transparent">—</span>
-      `;
+      const row = makeRow();
       el.appendChild(row);
       rows.push(row);
     }
 
-    let head = 0; // next row to overwrite (oldest)
+    let head = 0;
 
     const addLine = () => {
       const now = new Date();
@@ -66,23 +80,14 @@ function AttackFeed() {
       const cc = COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)];
 
       const row = rows[head];
-      // Update text in-place — no DOM creation, no layout shift
-      const spans = row.querySelectorAll("span");
-      spans[0].textContent = ts;
-      spans[0].className = "text-white/30 w-16 shrink-0 tabular-nums";
-      spans[1].textContent = "BLOCK";
-      spans[1].className = "font-bold w-14 shrink-0 text-red-400";
-      spans[2].textContent = ip;
-      spans[2].className = "w-32 shrink-0 text-green-400/80";
-      spans[3].textContent = `[${cc}]`;
-      spans[3].className = "w-10 shrink-0 text-white/40";
-      spans[4].textContent = type;
-      spans[4].className = "text-yellow-400/80";
+      const spans = row.querySelectorAll<HTMLSpanElement>("span");
+      spans[0].textContent = ts;       spans[0].style.color = S.ts;
+      spans[1].textContent = "BLOCK";  spans[1].style.color = S.block;
+      spans[2].textContent = ip;       spans[2].style.color = S.ip;
+      spans[3].textContent = `[${cc}]`; spans[3].style.color = S.cc;
+      spans[4].textContent = type;     spans[4].style.color = S.type;
 
-      // Move this row to the bottom visually (it's now the newest)
-      el.appendChild(row);
-
-      // Fade in
+      el.appendChild(row); // move to bottom — zero layout shift for others
       row.style.opacity = "0";
       row.style.transition = "none";
       requestAnimationFrame(() => {
