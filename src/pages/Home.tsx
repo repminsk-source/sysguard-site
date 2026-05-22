@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Shield, FileCode2, Activity, Lock, ArrowRight, Crosshair, Zap } from "lucide-react";
 import { Link } from "wouter";
 
@@ -45,7 +45,7 @@ function AttackFeed() {
       ]);
     };
     addLine();
-    const interval = setInterval(addLine, 900);
+    const interval = setInterval(addLine, 1400);
     return () => clearInterval(interval);
   }, []);
 
@@ -57,23 +57,19 @@ function AttackFeed() {
         <span className="ml-auto text-muted-foreground">sys.guard v2.1</span>
       </div>
       <div className="divide-y divide-border/30">
-        <AnimatePresence initial={false}>
-          {lines.map((line) => (
-            <motion.div
-              key={line.id}
-              initial={{ opacity: 0, x: -10, backgroundColor: "rgba(0,255,65,0.08)" }}
-              animate={{ opacity: 1, x: 0, backgroundColor: "rgba(0,255,65,0)" }}
-              transition={{ duration: 0.4 }}
-              className="flex items-center gap-3 px-4 py-2"
-            >
-              <span className="text-muted-foreground/50 w-16 shrink-0">{line.ts}</span>
-              <span className="text-red-400 font-bold w-14 shrink-0">BLOCK</span>
-              <span className="text-primary/80 w-32 shrink-0">{line.ip}</span>
-              <span className="text-muted-foreground w-8 shrink-0">[{line.cc}]</span>
-              <span className="text-yellow-400/80">{line.type}</span>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        {lines.map((line, i) => (
+          <div
+            key={line.id}
+            className="flex items-center gap-3 px-4 py-2"
+            style={i === 0 ? { animation: "log-in 0.5s ease" } : undefined}
+          >
+            <span className="text-muted-foreground/50 w-16 shrink-0">{line.ts}</span>
+            <span className="text-red-400 font-bold w-14 shrink-0">BLOCK</span>
+            <span className="text-primary/80 w-32 shrink-0">{line.ip}</span>
+            <span className="text-muted-foreground w-8 shrink-0">[{line.cc}]</span>
+            <span className="text-yellow-400/80">{line.type}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
