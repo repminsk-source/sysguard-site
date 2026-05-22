@@ -31,22 +31,73 @@ function useCountUp(target: number, duration = 2000) {
   }};
 }
 
+const FEED_SIZE = 10;
+
 function AttackFeed() {
-  const [lines, setLines] = useState<{ id: number; ip: string; type: string; cc: string; ts: string }[]>([]);
-  const counter = useRef(0);
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+
+    // Pre-fill fixed rows — DOM never shifts, only textContent changes
+    const rows: HTMLDivElement[] = [];
+    for (let i = 0; i < FEED_SIZE; i++) {
+      const row = document.createElement("div");
+      row.className = "flex items-center gap-3 px-4 py-2 border-b border-white/5";
+      row.innerHTML = `
+        <span class="text-white/20 w-16 shrink-0 tabular-nums">—:—:—</span>
+        <span class="font-bold w-14 shrink-0 text-transparent">BLOCK</span>
+        <span class="w-32 shrink-0 text-transparent">0.0.0.0</span>
+        <span class="w-10 shrink-0 text-transparent">[--]</span>
+        <span class="text-transparent">—</span>
+      `;
+      el.appendChild(row);
+      rows.push(row);
+    }
+
+    let head = 0; // next row to overwrite (oldest)
+
     const addLine = () => {
       const now = new Date();
       const ts = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
-      setLines(prev => [
-        { id: counter.current++, ip: randomIp(), type: ATTACK_TYPES[Math.floor(Math.random()*ATTACK_TYPES.length)], cc: COUNTRIES[Math.floor(Math.random()*COUNTRIES.length)], ts },
-        ...prev.slice(0, 11)
-      ]);
+      const ip = randomIp();
+      const type = ATTACK_TYPES[Math.floor(Math.random() * ATTACK_TYPES.length)];
+      const cc = COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)];
+
+      const row = rows[head];
+      // Update text in-place — no DOM creation, no layout shift
+      const spans = row.querySelectorAll("span");
+      spans[0].textContent = ts;
+      spans[0].className = "text-white/30 w-16 shrink-0 tabular-nums";
+      spans[1].textContent = "BLOCK";
+      spans[1].className = "font-bold w-14 shrink-0 text-red-400";
+      spans[2].textContent = ip;
+      spans[2].className = "w-32 shrink-0 text-green-400/80";
+      spans[3].textContent = `[${cc}]`;
+      spans[3].className = "w-10 shrink-0 text-white/40";
+      spans[4].textContent = type;
+      spans[4].className = "text-yellow-400/80";
+
+      // Move this row to the bottom visually (it's now the newest)
+      el.appendChild(row);
+
+      // Fade in
+      row.style.opacity = "0";
+      row.style.transition = "none";
+      requestAnimationFrame(() => {
+        row.style.transition = "opacity 0.4s ease";
+        row.style.opacity = "1";
+      });
+
+      head = (head + 1) % FEED_SIZE;
     };
-    addLine();
-    const interval = setInterval(addLine, 1400);
-    return () => clearInterval(interval);
+
+    const interval = setInterval(addLine, 1600);
+    return () => {
+      clearInterval(interval);
+      el.innerHTML = "";
+    };
   }, []);
 
   return (
@@ -56,21 +107,7 @@ function AttackFeed() {
         <span className="text-primary text-xs tracking-widest">LIVE THREAT FEED</span>
         <span className="ml-auto text-muted-foreground">sys.guard v2.1</span>
       </div>
-      <div className="divide-y divide-border/30">
-        {lines.map((line, i) => (
-          <div
-            key={line.id}
-            className="flex items-center gap-3 px-4 py-2"
-            style={i === 0 ? { animation: "log-in 0.5s ease" } : undefined}
-          >
-            <span className="text-muted-foreground/50 w-16 shrink-0">{line.ts}</span>
-            <span className="text-red-400 font-bold w-14 shrink-0">BLOCK</span>
-            <span className="text-primary/80 w-32 shrink-0">{line.ip}</span>
-            <span className="text-muted-foreground w-8 shrink-0">[{line.cc}]</span>
-            <span className="text-yellow-400/80">{line.type}</span>
-          </div>
-        ))}
-      </div>
+      <div ref={listRef} />
     </div>
   );
 }
