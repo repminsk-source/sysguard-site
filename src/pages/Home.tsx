@@ -33,76 +33,35 @@ function useCountUp(target: number, duration = 2000) {
 
 const FEED_SIZE = 10;
 
+function pad(s: string, n: number) { return s.padEnd(n, " "); }
+
 function AttackFeed() {
-  const listRef = useRef<HTMLDivElement>(null);
+  const preRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
-    const el = listRef.current;
-    if (!el) return;
+    const pre = preRef.current;
+    if (!pre) return;
 
-    // Pre-fill fixed rows — DOM never shifts, only textContent changes
-    const S = { ts: "rgba(255,255,255,0.25)", block: "#f87171", ip: "#4ade80cc", cc: "rgba(255,255,255,0.35)", type: "#fbbf24cc" };
+    // Single pre element — only textContent changes, zero DOM layout work
+    const lines: string[] = Array(FEED_SIZE).fill(
+      pad("—:—:—", 9) + pad("", 7) + pad("", 16) + pad("", 7) + ""
+    );
+    pre.textContent = lines.join("\n");
 
-    const makeRow = () => {
-      const row = document.createElement("div");
-      row.style.cssText = "display:flex;align-items:center;gap:12px;padding:7px 16px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px;";
-      const mk = (w: string, color: string, text: string) => {
-        const s = document.createElement("span");
-        s.style.cssText = `width:${w};flex-shrink:0;color:${color};font-family:inherit;`;
-        s.textContent = text;
-        return s;
-      };
-      row.appendChild(mk("64px",  "rgba(255,255,255,0.15)", "—:—:—"));
-      row.appendChild(mk("56px",  "transparent",            "BLOCK"));
-      row.appendChild(mk("128px", "transparent",            "—"));
-      row.appendChild(mk("40px",  "transparent",            "—"));
-      const last = document.createElement("span");
-      last.style.color = "transparent";
-      last.textContent = "—";
-      row.appendChild(last);
-      return row;
-    };
-
-    const rows: HTMLDivElement[] = [];
-    for (let i = 0; i < FEED_SIZE; i++) {
-      const row = makeRow();
-      el.appendChild(row);
-      rows.push(row);
-    }
-
-    let head = 0;
-
-    const addLine = () => {
+    const tick = () => {
       const now = new Date();
       const ts = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
       const ip = randomIp();
       const type = ATTACK_TYPES[Math.floor(Math.random() * ATTACK_TYPES.length)];
       const cc = COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)];
-
-      const row = rows[head];
-      const spans = row.querySelectorAll<HTMLSpanElement>("span");
-      spans[0].textContent = ts;       spans[0].style.color = S.ts;
-      spans[1].textContent = "BLOCK";  spans[1].style.color = S.block;
-      spans[2].textContent = ip;       spans[2].style.color = S.ip;
-      spans[3].textContent = `[${cc}]`; spans[3].style.color = S.cc;
-      spans[4].textContent = type;     spans[4].style.color = S.type;
-
-      el.appendChild(row); // move to bottom — zero layout shift for others
-      row.style.opacity = "0";
-      row.style.transition = "none";
-      requestAnimationFrame(() => {
-        row.style.transition = "opacity 0.4s ease";
-        row.style.opacity = "1";
-      });
-
-      head = (head + 1) % FEED_SIZE;
+      const line = `${pad(ts, 9)}${pad("BLOCK", 7)}${pad(ip, 16)}${pad(`[${cc}]`, 7)}${type}`;
+      lines.shift();
+      lines.push(line);
+      pre.textContent = lines.join("\n");
     };
 
-    const interval = setInterval(addLine, 1600);
-    return () => {
-      clearInterval(interval);
-      el.innerHTML = "";
-    };
+    const id = setInterval(tick, 1600);
+    return () => clearInterval(id);
   }, []);
 
   return (
@@ -112,7 +71,10 @@ function AttackFeed() {
         <span className="text-primary text-xs tracking-widest">LIVE THREAT FEED</span>
         <span className="ml-auto text-muted-foreground">sys.guard v2.1</span>
       </div>
-      <div ref={listRef} />
+      <pre
+        ref={preRef}
+        className="p-4 text-primary/70 leading-6 whitespace-pre overflow-hidden select-none"
+      />
     </div>
   );
 }
