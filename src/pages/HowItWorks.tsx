@@ -12,64 +12,39 @@ function randomIp() {
 const LOG_SIZE = 12;
 
 function LiveLog() {
-  const listRef = useRef<HTMLDivElement>(null);
+  const preRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
-    const el = listRef.current;
-    if (!el) return;
+    const pre = preRef.current;
+    if (!pre) return;
 
-    const COLORS = { block: "#f87171", info: "rgba(74,222,128,0.6)", warn: "#fbbf24" };
-
-    const rows: HTMLDivElement[] = [];
-    for (let i = 0; i < LOG_SIZE; i++) {
-      const row = document.createElement("div");
-      row.style.cssText = "line-height:1.4;color:transparent;font-family:inherit;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
-      row.textContent = "\u00A0";
-      el.appendChild(row);
-      rows.push(row);
-    }
-
-    let head = 0;
+    // Single pre element — textContent replacement is the cheapest DOM op possible
+    const lines: string[] = Array(LOG_SIZE).fill("");
+    pre.textContent = lines.join("\n");
 
     const add = () => {
       const rand = Math.random();
       const now = new Date();
       const ts = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
-      let text: string;
-      let color: string;
+      let line: string;
 
       if (rand < 0.6) {
         const attack = ATTACK_TYPES[Math.floor(Math.random() * ATTACK_TYPES.length)];
         const cc = COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)];
-        text = `[${ts}] BLOCK  ${randomIp()} [${cc}] → ${attack}`;
-        color = COLORS.block;
+        line = `[${ts}] BLOCK  ${randomIp()} [${cc}] → ${attack}`;
       } else if (rand < 0.8) {
-        text = `[${ts}] INFO   Signature DB updated (+${Math.floor(Math.random()*12)+1} rules)`;
-        color = COLORS.info;
+        line = `[${ts}] INFO   Signature DB updated (+${Math.floor(Math.random()*12)+1} rules)`;
       } else {
-        text = `[${ts}] WARN   Rate limit triggered: /api/login from ${randomIp()}`;
-        color = COLORS.warn;
+        line = `[${ts}] WARN   Rate limit triggered: /api/login from ${randomIp()}`;
       }
 
-      const row = rows[head];
-      el.appendChild(row); // move to bottom — zero shift for all other rows
-      row.textContent = text;
-      row.style.color = color;
-      row.style.opacity = "0";
-      row.style.transition = "none";
-      requestAnimationFrame(() => {
-        row.style.transition = "opacity 0.35s ease";
-        row.style.opacity = "1";
-      });
-
-      head = (head + 1) % LOG_SIZE;
+      lines.shift();
+      lines.push(line);
+      pre.textContent = lines.join("\n");
     };
 
-    const interval = setInterval(add, 1600);
-    return () => {
-      clearInterval(interval);
-      el.innerHTML = "";
-    };
+    const id = setInterval(add, 1600);
+    return () => clearInterval(id);
   }, []);
 
   return (
@@ -86,7 +61,10 @@ function LiveLog() {
           LIVE
         </span>
       </div>
-      <div ref={listRef} className="p-4 space-y-1 min-h-[260px]" />
+      <pre
+        ref={preRef}
+        className="p-4 text-primary/70 leading-6 whitespace-pre overflow-hidden select-none min-h-[260px]"
+      />
     </div>
   );
 }
