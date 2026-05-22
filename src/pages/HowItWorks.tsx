@@ -9,37 +9,65 @@ function randomIp() {
   return `${Math.floor(Math.random()*220)+1}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*255)}.${Math.floor(Math.random()*254)+1}`;
 }
 
+const LOG_SIZE = 12;
+
 function LiveLog() {
-  const [lines, setLines] = useState<{ id: number; text: string; type: "block" | "info" | "warn" }[]>([]);
-  const counter = useRef(0);
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+
+    const rows: HTMLDivElement[] = [];
+    for (let i = 0; i < LOG_SIZE; i++) {
+      const row = document.createElement("div");
+      row.className = "leading-5 text-transparent select-none";
+      row.textContent = "\u00A0";
+      el.appendChild(row);
+      rows.push(row);
+    }
+
+    let head = 0;
+
     const add = () => {
       const rand = Math.random();
       const now = new Date();
       const ts = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
       let text: string;
-      let type: "block" | "info" | "warn";
+      let color: string;
 
       if (rand < 0.6) {
         const attack = ATTACK_TYPES[Math.floor(Math.random() * ATTACK_TYPES.length)];
         const cc = COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)];
         text = `[${ts}] BLOCK  ${randomIp()} [${cc}] → ${attack}`;
-        type = "block";
+        color = "text-red-400";
       } else if (rand < 0.8) {
         text = `[${ts}] INFO   Signature DB updated (+${Math.floor(Math.random()*12)+1} rules)`;
-        type = "info";
+        color = "text-green-400/60";
       } else {
         text = `[${ts}] WARN   Rate limit triggered: /api/login from ${randomIp()}`;
-        type = "warn";
+        color = "text-yellow-400";
       }
 
-      setLines(prev => [{ id: counter.current++, text, type }, ...prev.slice(0, 14)]);
+      const row = rows[head];
+      el.appendChild(row); // move to bottom — no shift for other rows
+      row.textContent = text;
+      row.className = `leading-5 ${color}`;
+      row.style.opacity = "0";
+      row.style.transition = "none";
+      requestAnimationFrame(() => {
+        row.style.transition = "opacity 0.35s ease";
+        row.style.opacity = "1";
+      });
+
+      head = (head + 1) % LOG_SIZE;
     };
 
-    add();
-    const interval = setInterval(add, 1400);
-    return () => clearInterval(interval);
+    const interval = setInterval(add, 1600);
+    return () => {
+      clearInterval(interval);
+      el.innerHTML = "";
+    };
   }, []);
 
   return (
@@ -56,22 +84,7 @@ function LiveLog() {
           LIVE
         </span>
       </div>
-      <div className="min-h-[300px] p-4 space-y-1">
-        {lines.map((line, i) => (
-          <div
-            key={line.id}
-            style={i === 0 ? { animation: "log-in 0.5s ease" } : undefined}
-            className={
-              line.type === "block" ? "text-red-400" :
-              line.type === "warn" ? "text-yellow-400" :
-              "text-primary/60"
-            }
-          >
-            {line.text}
-          </div>
-        ))}
-        <span className="text-primary animate-pulse">_</span>
-      </div>
+      <div ref={listRef} className="p-4 space-y-1 min-h-[260px]" />
     </div>
   );
 }
