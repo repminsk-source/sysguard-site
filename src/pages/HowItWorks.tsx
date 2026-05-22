@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+
 import { Terminal, Settings, ShieldCheck, Play, ArrowRight, Server, Cpu, Network } from "lucide-react";
 
 const ATTACK_TYPES = ["SQLi", "XSS", "DDoS", "Brute Force", "LFI", "RCE", "Bot", "Flood", "SSRF", "Scraper", "XXE"];
@@ -37,7 +38,7 @@ function LiveLog() {
     };
 
     add();
-    const interval = setInterval(add, 800);
+    const interval = setInterval(add, 1400);
     return () => clearInterval(interval);
   }, []);
 
@@ -56,24 +57,19 @@ function LiveLog() {
         </span>
       </div>
       <div className="min-h-[300px] p-4 space-y-1">
-        <AnimatePresence initial={false}>
-          {lines.map((line) => (
-            <motion.div
-              key={line.id}
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className={
-                line.type === "block" ? "text-red-400" :
-                line.type === "warn" ? "text-yellow-400" :
-                "text-primary/60"
-              }
-            >
-              {line.text}
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        {lines.map((line, i) => (
+          <div
+            key={line.id}
+            style={i === 0 ? { animation: "log-in 0.5s ease" } : undefined}
+            className={
+              line.type === "block" ? "text-red-400" :
+              line.type === "warn" ? "text-yellow-400" :
+              "text-primary/60"
+            }
+          >
+            {line.text}
+          </div>
+        ))}
         <span className="text-primary animate-pulse">_</span>
       </div>
     </div>
